@@ -1,0 +1,4 @@
+name: ServerDiscovery
+main: net.itskev.serverdiscovery.ServerDiscoveryPlugin
+version: @VERSION@
+author: ItsKev
