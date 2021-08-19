@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "net.itskev"
-version = "1.0.0-SNAPSHOT"
+version = "1.0.0"
 
 repositories {
     mavenCentral()
@@ -12,15 +12,11 @@ repositories {
 }
 
 dependencies {
+    implementation("io.fabric8:kubernetes-client:5.7.0")
     compileOnly("io.github.waterfallmc:waterfall-api:1.17-R0.1-SNAPSHOT")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.6.0")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
-}
 
-tasks {
-    test {
-        useJUnitPlatform()
-    }
+    compileOnly("org.projectlombok:lombok:1.18.20")
+    annotationProcessor("org.projectlombok:lombok:1.18.20")
 }
 
 val tokens = mapOf("VERSION" to project.version)
