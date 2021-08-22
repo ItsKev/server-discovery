@@ -5,28 +5,46 @@ This plugin connects minecraft servers to a waterfall proxy within Kubernetes.
 The service account in the namespace which the proxy is running in needs the privilege to read 
 endpoints from the namespaces specified in the config.
 
-## Config file
-### endpointName
-The endpoints name which the minecraft servers are connected to. This name is normally set directly
-in the service itself. A simple service could look like the following:
+## Setup
+Minecraft servers are discovered by labels. The namespaces where the Minecraft servers are running in have to be
+labeled with `server-discovery: "true"`. The pods which the minecraft server is running in has to be labeled with `server-discovery: "true"`
+as well.
 
+## Examples
+Namespace:
 ```yaml
 apiVersion: v1
-kind: Service
+kind: Namespace
 metadata:
-  name: minecraft # this is the name which has to be set in the config
-  namespace: minecraft
-spec:
-  selector:
-    app: minecraft
-  ports:
-    - protocol: TCP
-      port: 25565
-      targetPort: 25565
+  name: minecraft
+  labels:
+    server-discovery: "true"
 ```
 
-### namespaces
-The namespaces where the minecraft servers are running in.
+Deployment:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minecraft
+  namespace: minecraft
+  labels:
+    app: minecraft
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minecraft
+  template:
+    metadata:
+      labels:
+        app: minecraft
+        server-discovery: "true"
+    spec:
+      containers:
+      - name: minecraft
+        image: minecraft
+```
 
 ## Role and role bindings
 Role in the namespace where the minecraft servers are running in:
@@ -38,8 +56,8 @@ metadata:
   name: minecraft-role
 rules:
   - apiGroups: [""]
-    resources: ["endpoints"]
-    verbs: ["get"]
+    resources: ["pods"]
+    verbs: ["list"]
 ```
 
 Corresponding role binding to the namespace where the proxy is running in:
@@ -52,9 +70,37 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: default
-    namespace: default
+    namespace: proxy
 roleRef:
   kind: Role
   name: minecraft-role
+  apiGroup: rbac.authorization.k8s.io
+```
+
+A cluster role has to be defined to list namespaces:
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: namespace-reader
+rules:
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["list"]
+```
+
+The role binding for the cluster role could look like the following:
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: read-namespace-global
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: proxy
+roleRef:
+  kind: ClusterRole
+  name: namespace-reader
   apiGroup: rbac.authorization.k8s.io
 ```
