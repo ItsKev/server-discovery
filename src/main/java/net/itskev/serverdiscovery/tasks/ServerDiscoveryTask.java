@@ -20,13 +20,15 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ServerDiscoveryTask extends TimerTask {
 
+  private static final String LABEL_NAME = "server-discovery";
+
   private final ProxyServer proxyServer;
   private final DefaultKubernetesClient kubernetesClient;
 
   @Override
   public void run() {
     NamespaceList list = kubernetesClient.namespaces()
-        .withLabel("server-discovery", "true")
+        .withLabel(LABEL_NAME, "true")
         .list();
 
     List<ServerInfo> serverInfo = new ArrayList<>();
@@ -34,7 +36,7 @@ public class ServerDiscoveryTask extends TimerTask {
       try {
         PodList podList = kubernetesClient.pods()
             .inNamespace(namespace.getMetadata().getName())
-            .withLabel("server-discovery", "true")
+            .withLabel(LABEL_NAME, "true")
             .list();
 
         serverInfo.addAll(getServerInfo(podList.getItems()));
